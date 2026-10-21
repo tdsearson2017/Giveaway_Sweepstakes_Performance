@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Giveaway Sweepstakes Performance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Electrolize&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#0a1215; --panel:#0f1d21; --panel-2:#152a2f; --line:#2b4b52;
+  --ink:#f3e9d8; --ink-dim:#9db3b4;
+  --brass:#ffa63d; --brass-soft:#8a5a1a;   /* amber (primary accent) */
+  --olive:#6fe0a8;                         /* soft green (good) */
+  --rust:#ff5a36;                          /* hot red */
+  --sky:#3fd9d0;                           /* teal */
+  --pink:#ff6a1f; --violet:#4a7a8c;
+  --radius:0px;
+  font-family:"IBM Plex Sans",-apple-system,sans-serif;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+*{box-sizing:border-box;}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{
+  margin:0; color:var(--ink); min-height:100%;
+  -webkit-font-smoothing:antialiased;
+  background-color:var(--bg);
+  background-image:
+    radial-gradient(ellipse 900px 520px at 8% -8%, rgba(255,106,31,.20), transparent 60%),
+    radial-gradient(ellipse 800px 520px at 100% 0%, rgba(63,217,208,.15), transparent 55%),
+    linear-gradient(rgba(63,217,208,.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(63,217,208,.08) 1px, transparent 1px);
+  background-size:auto,auto,32px 32px,32px 32px;
+  background-attachment:fixed;
+}
+/* CRT scanlines */
+body::after{
+  content:""; position:fixed; inset:0; pointer-events:none; z-index:60;
+  background:repeating-linear-gradient(to bottom, rgba(0,0,0,.20) 0 1px, transparent 1px 3px);
+  opacity:.45;
+}
+.wrap{max-width:1180px; margin:0 auto; padding:32px 24px 80px;}
+
+/* ---------- Header ---------- */
+header.hero{
+  display:flex; flex-wrap:wrap; justify-content:space-between; align-items:flex-end;
+  gap:24px; padding-bottom:26px; margin-bottom:34px; border-bottom:2px solid var(--line);
+}
+.hero-title{display:flex; align-items:center; gap:22px;}
+.hero-kicker{
+  font-family:"Electrolize",sans-serif; font-size:14px; letter-spacing:.24em; color:var(--pink);
+  text-shadow:0 0 10px rgba(255,106,31,.7); margin-bottom:10px;
+}
+.hero-kicker::after{content:"_"; color:var(--sky); margin-left:4px; animation:blink 1s steps(1) infinite;}
+.hero-title h1{
+  font-family:"Electrolize",sans-serif; font-weight:400; line-height:1.15; text-transform:uppercase; letter-spacing:.04em;
+  font-size:clamp(28px,4vw,46px); margin:0 0 14px; color:var(--ink);
+  text-shadow:3px 3px 0 var(--pink), -2px -2px 0 rgba(63,217,208,.8);
+}
+.hero-title p{margin:0; color:var(--ink-dim); font-size:14.5px; max-width:52ch; line-height:1.5;}
+.hero-range{
+  font-family:"Electrolize",sans-serif; font-size:20px; letter-spacing:.06em; color:var(--brass); white-space:nowrap;
+  background:var(--panel); border:2px solid var(--brass); padding:4px 16px 2px;
+  box-shadow:4px 4px 0 #000, 0 0 14px rgba(255,166,61,.35); text-shadow:0 0 8px rgba(255,166,61,.6);
+}
+.hero-range::before{content:"SCORE ▸ "; color:var(--ink-dim); font-size:18px; text-shadow:none;}
+
+@keyframes blink{50%{opacity:0;}}
+@media (prefers-reduced-motion:reduce){ .hero-kicker::after{animation:none;} }
+
+/* ---------- KPI strip ---------- */
+.kpis{
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px;
+  margin-bottom:40px;
+}
+.kpi{
+  background:var(--panel); border:2px solid var(--line); border-top:5px solid var(--brass);
+  padding:16px 14px 14px; box-shadow:4px 4px 0 #000;
+}
+.kpi:nth-child(1){border-top-color:var(--brass);}
+.kpi:nth-child(2){border-top-color:var(--pink);}
+.kpi:nth-child(3){border-top-color:var(--sky);}
+.kpi:nth-child(4){border-top-color:var(--olive);}
+.kpi:nth-child(5){border-top-color:var(--olive);}
+.kpi:nth-child(6){border-top-color:var(--brass);}
+.kpi:nth-child(7){border-top-color:var(--pink);}
+.kpi .num{
+  font-family:"Electrolize",sans-serif; font-size:clamp(17px,1.8vw,22px); line-height:1.2; font-variant-numeric:tabular-nums; color:var(--ink);
+}
+.kpi:nth-child(1) .num,.kpi:nth-child(6) .num{color:var(--brass); text-shadow:0 0 12px rgba(255,166,61,.55);}
+.kpi:nth-child(2) .num,.kpi:nth-child(7) .num{color:var(--pink); text-shadow:0 0 12px rgba(255,106,31,.55);}
+.kpi:nth-child(3) .num{color:var(--sky); text-shadow:0 0 12px rgba(63,217,208,.55);}
+.kpi:nth-child(4) .num,.kpi:nth-child(5) .num{color:var(--olive); text-shadow:0 0 12px rgba(111,224,168,.5);}
+.kpi .label{margin-top:8px; font-size:12px; color:var(--ink-dim); line-height:1.4;}
+
+/* ---------- Section headers ---------- */
+.section-head{display:flex; justify-content:space-between; align-items:baseline; margin:0 0 16px; gap:16px; flex-wrap:wrap;}
+.section-head h2{
+  font-family:"Electrolize",sans-serif; font-weight:400; font-size:17px !important; line-height:1.3; text-transform:uppercase; letter-spacing:.09em;
+  margin:0; color:var(--sky); text-shadow:2px 2px 0 #000, 0 0 10px rgba(63,217,208,.45);
+}
+.section-head h2::before{content:"▶ "; color:var(--pink);}
+.section-head .sub{font-size:13px; color:var(--ink-dim);}
+
+/* ---------- Panels ---------- */
+.panel{
+  background:var(--panel); border:2px solid var(--line); border-radius:0; padding:22px; margin-bottom:40px;
+  box-shadow:5px 5px 0 #000, inset 0 0 0 1px rgba(255,255,255,.03);
+}
+.two-col .panel:nth-child(1){border-color:#8a4a1c;}
+.chart-holder{position:relative; height:300px;}
+.legend-row{display:flex; gap:22px; margin-top:14px; flex-wrap:wrap; font-size:12.5px; color:var(--ink-dim);}
+.legend-row span{display:inline-flex; align-items:center; gap:7px;}
+.legend-row i{width:12px; height:12px; display:inline-block; border:2px solid #000;}
+
+/* ---------- Year tabs ---------- */
+.year-tabs{display:flex; gap:10px; overflow-x:auto; padding:2px 4px 10px 0; margin-bottom:18px; scrollbar-width:thin;}
+.year-tab{
+  flex:0 0 auto; font-family:"Electrolize",sans-serif; font-size:15px; letter-spacing:.08em; line-height:1;
+  background:var(--panel-2); border:2px solid var(--line); color:var(--ink-dim);
+  padding:8px 16px 6px; cursor:pointer; box-shadow:3px 3px 0 #000;
+  transition:transform .08s steps(2), color .15s, border-color .15s;
+}
+.year-tab:hover{color:var(--ink); border-color:var(--sky); transform:translate(-1px,-1px);}
+.year-tab.active{color:#0a1215; background:var(--brass); border-color:var(--brass); box-shadow:3px 3px 0 var(--pink);}
+.year-tab:focus-visible{outline:2px solid var(--sky); outline-offset:2px;}
+
+.year-summary{display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; margin-bottom:22px;}
+.year-summary .cell{background:var(--panel-2); border:2px solid var(--line); padding:12px 14px; box-shadow:3px 3px 0 #000;}
+.year-summary .cell .v{font-family:"Electrolize",sans-serif; font-size:21px; line-height:1.1; color:var(--brass); text-shadow:0 0 8px rgba(255,166,61,.35);}
+.year-summary .cell .k{font-size:11.5px; color:var(--ink-dim); margin-top:4px;}
+
+/* ---------- Table ---------- */
+.table-scroll{overflow-x:auto;}
+table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:760px;}
+thead th{
+  text-align:left; font-family:"Electrolize",sans-serif; font-weight:400; font-size:13px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--sky); padding:9px 12px 6px; border-bottom:2px solid var(--line);
+  cursor:pointer; white-space:nowrap; user-select:none; background:rgba(63,217,208,.04);
+}
+thead th:hover{color:var(--pink);}
+thead th.sorted{color:var(--brass);}
+thead th .arrow{font-size:11px; margin-left:4px;}
+tbody td{padding:9px 12px; border-bottom:1px solid rgba(43,75,82,.7); font-variant-numeric:tabular-nums; white-space:nowrap;}
+tbody td.name{white-space:normal; color:var(--ink); font-weight:500;}
+tbody tr:hover td{background:rgba(255,106,31,.09);}
+td.num{text-align:right; color:#d9d0c0;}
+.flag{font-size:11px; color:var(--sky);}
+td.flag{font-size:11px; color:var(--sky);}
+
+/* ---------- Leaderboards ---------- */
+.two-col{display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-bottom:40px;}
+@media (max-width:760px){ .two-col{grid-template-columns:1fr;} }
+.board-row{display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px dashed rgba(43,75,82,.9); gap:12px;}
+.board-row:last-child{border-bottom:none;}
+.board-row .rank{font-family:"Electrolize",sans-serif; color:var(--ink-dim); font-size:16px; width:30px; flex:0 0 auto; line-height:1;}
+.board-row:nth-child(1) .rank{color:var(--brass); text-shadow:0 0 8px rgba(255,166,61,.6);}
+.board-row:nth-child(2) .rank{color:var(--sky);}
+.board-row:nth-child(3) .rank{color:var(--pink);}
+.board-row .name{flex:1; font-size:13.5px; color:var(--ink);}
+.board-row .name small{display:block; color:var(--ink-dim); font-size:11.5px; margin-top:2px;}
+.board-row .val{font-family:"Electrolize",sans-serif; font-size:19px; flex:0 0 auto; text-shadow:0 0 8px currentColor;}
+
+footer{margin-top:8px; padding-top:20px; border-top:2px solid var(--line); font-size:12px; color:var(--ink-dim); line-height:1.7;}
+footer::before{content:"◢ SYSTEM NOTES"; display:block; font-family:"Electrolize",sans-serif; font-size:14px; color:var(--pink); letter-spacing:.22em; margin-bottom:6px;}
+footer strong{color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="hero">
+    <div class="hero-title">
+      <div>
+        <div class="hero-kicker">PLAYER 1 READY</div>
+        <h1>Giveaway Sweepstakes Performance</h1>
+        <p>Cost and revenue per subscriber across every giveaway sweepstakes, 2019 through year‑to‑date 2026.</p>
+      </div>
+    </div>
+    <div class="hero-range" id="heroRange">2019 – 2026</div>
+  </header>
+
+  <section class="kpis" id="kpiStrip"></section>
+
+  <section class="panel">
+    <div class="section-head">
+      <h2>New subscribers by year</h2>
+      <span class="sub">Unique subscribers added to the master list per sweepstakes year</span>
+    </div>
+    <div class="chart-holder" style="height:250px;"><canvas id="subsChart"></canvas></div>
+  </section>
+
+  <section class="two-col">
+    <div class="panel">
+      <div class="section-head"><h2>Lowest cost per subscriber</h2></div>
+      <div id="cpsChartInner" style="position:relative;height:200px;"><canvas id="cpsChart"></canvas></div><div id="cpsChartEmpty" style="display:none;color:var(--ink-dim);font-size:13px;padding:18px 0 6px;"></div>
+    </div>
+    <div class="panel">
+      <div class="section-head"><h2>Highest revenue per subscriber (90d)</h2></div>
+      <div id="rev90ChartInner" style="position:relative;height:200px;"><canvas id="rev90Chart"></canvas></div><div id="rev90ChartEmpty" style="display:none;color:var(--ink-dim);font-size:13px;padding:18px 0 6px;"></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Performance by giveaway type</h2>
+      <span class="sub">Includes owned and sponsor‑covered giveaways, all years</span>
+    </div>
+    <div class="panel" style="padding:0;">
+      <div class="table-scroll">
+        <table id="typeTable">
+          <thead>
+            <tr>
+              <th data-key="type">Type</th>
+              <th data-key="campaigns" class="num">Sweepstakes</th>
+              <th data-key="total_new_subscribers" class="num">New subs</th>
+              <th data-key="avg_cost_per_subscriber" class="num">Cost / sub</th>
+              <th data-key="avg_rev_per_sub_30d" class="num">Rev / sub (30d)</th>
+              <th data-key="avg_rev_per_sub_90d" class="num">Rev / sub (90d)</th>
+            </tr>
+          </thead>
+          <tbody id="typeTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Sweepstakes detail</h2>
+      <span class="sub">Select a year or the Sponsored tab &middot; click a column to sort</span>
+    </div>
+    <div class="year-tabs" id="yearTabs"></div>
+    <div id="yearView">
+    <div class="year-summary" id="yearSummary"></div>
+
+    <div class="panel" id="retentionPanel" style="margin-bottom:22px;">
+      <div class="section-head">
+        <h2>Subscribers remaining · 30 &amp; 90 days</h2>
+        <span class="sub">Actual retention: subscribers still on the list at each check-in &middot; hover a bar for % of new subscribers</span>
+      </div>
+      <div class="table-scroll">
+        <div id="retChartInner" style="position:relative;height:300px;"><canvas id="retentionChart"></canvas></div>
+      </div>
+      <div id="retEmpty" style="display:none;color:var(--ink-dim);font-size:13px;padding:24px 0 8px;">30/90‑day follow‑up wasn't tracked for this year.</div>
+      <div class="legend-row">
+        <span><i style="background:var(--pink)"></i>Remaining after 30 days</span>
+        <span><i style="background:var(--sky)"></i>Remaining after 90 days</span>
+      </div>
+    </div>
+    <div class="panel" style="padding:0;">
+      <div class="table-scroll">
+        <table id="campaignTable">
+          <thead>
+            <tr>
+              <th data-key="campaign">Sweepstakes</th>
+              <th data-key="giveaway_type">Type</th>
+              <th data-key="date">Month</th>
+              <th data-key="revenue" class="num">Revenue</th>
+              <th data-key="cost" class="num">Cost</th>
+              <th data-key="new_subscribers" class="num">New subs</th>
+              <th data-key="cost_per_subscriber" class="num">Cost / sub</th>
+              <th data-key="rev_per_sub_30d" class="num">Rev / sub (30d)</th>
+              <th data-key="rev_per_sub_90d" class="num">Rev / sub (90d)</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="two-col" style="margin-top:20px;">
+      <div class="panel">
+        <div class="section-head"><h2 style="font-size:16px;">Lowest cost per subscriber — <span id="cpsYearLabel"></span></h2></div>
+        <div id="cpsYearChartInner" style="position:relative;height:200px;"><canvas id="cpsYearChart"></canvas></div><div id="cpsYearChartEmpty" style="display:none;color:var(--ink-dim);font-size:13px;padding:18px 0 6px;"></div>
+      </div>
+      <div class="panel">
+        <div class="section-head"><h2 style="font-size:16px;">Highest revenue per subscriber (90d) — <span id="rev90YearLabel"></span></h2></div>
+        <div id="rev90YearChartInner" style="position:relative;height:200px;"><canvas id="rev90YearChart"></canvas></div><div id="rev90YearChartEmpty" style="display:none;color:var(--ink-dim);font-size:13px;padding:18px 0 6px;"></div>
+      </div>
+    </div>
+    </div>
+
+  <div id="sponsoredSection" style="display:none;">
+    <div class="section-head">
+      <h2 style="font-size:16px;">Sponsored giveaways</h2>
+      <span class="sub">Partner-run giveaways we only cover equipment/placement for &mdash; tracked separately from owned sweepstakes</span>
+    </div>
+    <div class="year-summary" id="sponsoredSummary"></div>
+
+    <div class="panel" id="sponsoredRetPanel" style="margin-bottom:22px;">
+      <div class="section-head">
+        <h2>Subscribers remaining · 30 &amp; 90 days</h2>
+        <span class="sub">Actual retention for sponsored giveaways &middot; hover a bar for % of new subscribers</span>
+      </div>
+      <div class="table-scroll">
+        <div id="spRetInner" style="position:relative;height:300px;"><canvas id="sponsoredRetChart"></canvas></div>
+      </div>
+      <div class="legend-row">
+        <span><i style="background:var(--pink)"></i>Remaining after 30 days</span>
+        <span><i style="background:var(--sky)"></i>Remaining after 90 days</span>
+      </div>
+    </div>
+    <div class="panel" style="padding:0;">
+      <div class="table-scroll">
+        <table id="sponsoredTable">
+          <thead>
+            <tr>
+              <th>Sweepstakes</th><th>Month</th>
+              <th class="num">Cost</th><th class="num">New subs</th><th class="num">Cost / sub</th>
+              <th class="num">Left @ 30d</th><th class="num">Sales (30d)</th><th class="num">Rev / sub (30d)</th>
+              <th class="num">Left @ 90d</th><th class="num">Sales (90d)</th><th class="num">Rev / sub (90d)</th>
+            </tr>
+          </thead>
+          <tbody id="sponsoredBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Subscriber behavior by giveaway</h2>
+      <span class="sub">Initial new subscribers vs. how many were still on the list at 30/90 days</span>
+    </div>
+    <div class="panel" style="margin-bottom:20px;">
+      <div class="table-scroll">
+        <div id="subChartInner" style="position:relative;height:320px;">
+          <canvas id="subBehaviorChart"></canvas>
+        </div>
+      </div>
+      <div class="legend-row">
+        <span><i style="background:var(--brass)"></i>New subscribers</span>
+        <span><i style="background:var(--pink)"></i>Remaining @ 30 days</span>
+        <span><i style="background:var(--sky)"></i>Remaining @ 90 days</span>
+      </div>
+    </div>
+    <div class="panel" style="padding:0;">
+      <div class="table-scroll">
+        <table id="subBehaviorTable">
+          <thead>
+            <tr>
+              <th data-key="campaign">Sweepstakes</th>
+              <th data-key="giveaway_type">Type</th>
+              <th data-key="new_subscribers" class="num">New subs</th>
+              <th data-key="remaining_subs_30d" class="num">Remaining @ 30d</th>
+              <th data-key="retention_30d" class="num">Retained @ 30d</th>
+              <th data-key="remaining_subs_90d" class="num">Remaining @ 90d</th>
+              <th data-key="retention_90d" class="num">Retained @ 90d</th>
+            </tr>
+          </thead>
+          <tbody id="subBehaviorBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer id="footerNote"></footer>
+
+</div>
+
+<script>
+const DATA = {"campaigns": [{"year": "2019", "campaign": "6.5 Creedmoor Precision", "giveaway_type": "Rifle Build", "source": "owned", "date": "2019-05-01", "revenue": 14995.52, "cost": 1863.01, "total_emails": 136328, "new_subscribers": 3880, "cost_per_subscriber": 0.48, "visits": 11853, "remaining_subs_30d": 2224, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": "PCC Build", "giveaway_type": "Rifle Build", "source": "owned", "date": "2019-06-01", "revenue": 23677.01, "cost": 1147.35, "total_emails": 110496, "new_subscribers": 8596, "cost_per_subscriber": 0.13, "visits": 12415, "remaining_subs_30d": 5178, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": ".308 Deer Hunting Rifle", "giveaway_type": "Rifle Build", "source": "owned", "date": "2019-07-01", "revenue": 13903.04, "cost": 1735.97, "total_emails": 121573, "new_subscribers": 2325, "cost_per_subscriber": 0.75, "visits": 12389, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": ".458 SOCOM Rifle", "giveaway_type": "Rifle Build", "source": "owned", "date": "2019-08-01", "revenue": 29258.92, "cost": 1164.15, "total_emails": 112722, "new_subscribers": 1586, "cost_per_subscriber": 0.73, "visits": 22825, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": "Lightweight Rifle", "giveaway_type": "Rifle Build", "source": "owned", "date": "2019-09-01", "revenue": 29195.16, "cost": 1596.13, "total_emails": 128251, "new_subscribers": 2280, "cost_per_subscriber": 0.7, "visits": 15753, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": "Glocktober: Week1", "giveaway_type": "Pistol Build", "source": "owned", "date": "2019-10-01", "revenue": 16591.39, "cost": 904.16, "total_emails": null, "new_subscribers": null, "cost_per_subscriber": null, "visits": 15269, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": "Glocktober: Week2", "giveaway_type": "Pistol Build", "source": "owned", "date": "2019-10-01", "revenue": 22652.95, "cost": 723.52, "total_emails": 90506, "new_subscribers": null, "cost_per_subscriber": null, "visits": 15427, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": "Glocktober: Week3", "giveaway_type": "Pistol Build", "source": "owned", "date": "2019-10-01", "revenue": 21541.86, "cost": 861.42, "total_emails": 97779, "new_subscribers": null, "cost_per_subscriber": null, "visits": 15703, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": "Glocktober: Week4", "giveaway_type": "Pistol Build", "source": "owned", "date": "2019-10-01", "revenue": 23025.35, "cost": 0, "total_emails": 145383, "new_subscribers": 6225, "cost_per_subscriber": 0.4, "visits": 13372, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": "SpaceGun Build", "giveaway_type": "Rifle Build", "source": "owned", "date": "2019-11-01", "revenue": 18775.74, "cost": 1473.1, "total_emails": 210609, "new_subscribers": 1441, "cost_per_subscriber": 1.02, "visits": 17380, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2019", "campaign": "Home Defense Build", "giveaway_type": "Rifle Build", "source": "owned", "date": "2019-12-01", "revenue": 83588.11, "cost": 2493.76, "total_emails": 181038, "new_subscribers": 1320, "cost_per_subscriber": 1.89, "visits": 19083, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "SPR Build", "giveaway_type": "Rifle Build", "source": "owned", "date": "2020-01-01", "revenue": 35905.62, "cost": 2187.35, "total_emails": 269003, "new_subscribers": 2432, "cost_per_subscriber": 0.9, "visits": 24029, "remaining_subs_30d": 2224, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "PCC Build", "giveaway_type": "Rifle Build", "source": "owned", "date": "2020-02-01", "revenue": 31338.07, "cost": 1123.51, "total_emails": 152563, "new_subscribers": 1803, "cost_per_subscriber": 0.62, "visits": 20160, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "EDC GAW", "giveaway_type": "Pistol Build", "source": "owned", "date": "2020-03-01", "revenue": 37696.76, "cost": 1619.13, "total_emails": 315306, "new_subscribers": 3238, "cost_per_subscriber": 0.5, "visits": 24118, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "AK GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2020-04-01", "revenue": 107614.69, "cost": 9055.36, "total_emails": 381987, "new_subscribers": 3582, "cost_per_subscriber": 2.53, "visits": 35341, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "Shopping Spree GAW", "giveaway_type": "Gift Card", "source": "owned", "date": "2020-05-01", "revenue": 181206.61, "cost": 10255.28, "total_emails": 341925, "new_subscribers": 4460, "cost_per_subscriber": 2.3, "visits": 38549, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "Father's Day GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2020-06-01", "revenue": 103031.68, "cost": 10320.99, "total_emails": 299331, "new_subscribers": 2758, "cost_per_subscriber": 3.74, "visits": 29758, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "July SCAR GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2020-07-01", "revenue": 115959.5, "cost": 13767.83, "total_emails": 396418, "new_subscribers": 6174, "cost_per_subscriber": 2.23, "visits": 33062, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "Always Ready GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2020-08-01", "revenue": 167616.67, "cost": 15269.75, "total_emails": 432712, "new_subscribers": 4485, "cost_per_subscriber": 3.4, "visits": 35097, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "Stay Prepared GAW", "giveaway_type": "Pistol Build", "source": "owned", "date": "2020-09-01", "revenue": 81294.55, "cost": 7518.33, "total_emails": 184035, "new_subscribers": 3729, "cost_per_subscriber": 2.02, "visits": 20928, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "Ghostly Holloween GAW", "giveaway_type": "Pistol Build", "source": "owned", "date": "2020-10-01", "revenue": 85316.67, "cost": 5166.24, "total_emails": 218070, "new_subscribers": 3972, "cost_per_subscriber": 1.3, "visits": 23078, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2020", "campaign": "AdventCalendar", "giveaway_type": "Christmas", "source": "owned", "date": "2020-12-01", "revenue": 85098.9, "cost": 6923.79, "total_emails": 444948, "new_subscribers": 3057, "cost_per_subscriber": 2.26, "visits": 32933, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "TRIARC GUN GIVEAWAY", "giveaway_type": "Pistol Build", "source": "owned", "date": "2021-01-01", "revenue": 163575.82, "cost": 12449.21, "total_emails": 397680, "new_subscribers": 4077, "cost_per_subscriber": 3.05, "visits": 37287, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "HK VP9 GIVEAWAY", "giveaway_type": "Pistol Build", "source": "owned", "date": "2021-02-01", "revenue": 133086.43, "cost": 1599.48, "total_emails": 320429, "new_subscribers": 4436, "cost_per_subscriber": 0.36, "visits": 44169, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "SOLGW GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2021-03-01", "revenue": 158470.36, "cost": 5318.27, "total_emails": 588509, "new_subscribers": 7034, "cost_per_subscriber": 0.76, "visits": 54899, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "SIG M17 GAW", "giveaway_type": "Pistol Build", "source": "owned", "date": "2021-04-01", "revenue": 84282.24, "cost": 5869.15, "total_emails": 356679, "new_subscribers": 7451, "cost_per_subscriber": 0.79, "visits": 28264, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "GunsNGear", "giveaway_type": "3rd Party", "source": "owned", "date": "2021-05-01", "revenue": 79497.77, "cost": 2380.79, "total_emails": 443593, "new_subscribers": 5465, "cost_per_subscriber": 0.44, "visits": 23013, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "Extreme Precision GAW", "giveaway_type": "3rd Party", "source": "owned", "date": "2021-06-01", "revenue": 48316.35, "cost": 2654.54, "total_emails": 278088, "new_subscribers": 2387, "cost_per_subscriber": 1.11, "visits": 22822, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "Absolute American GAW", "giveaway_type": "3rd Party", "source": "owned", "date": "2021-07-01", "revenue": 43912.31, "cost": 2174.66, "total_emails": 275270, "new_subscribers": 2389, "cost_per_subscriber": 0.91, "visits": 20807, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "Conceal carry gaw", "giveaway_type": "Pistol Build", "source": "owned", "date": "2021-08-01", "revenue": 88647.56, "cost": 1765.51, "total_emails": 277456, "new_subscribers": 2138, "cost_per_subscriber": 0.83, "visits": 21626, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "SOLGW GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2021-09-01", "revenue": 55865.88, "cost": 1422.35, "total_emails": 253919, "new_subscribers": 2159, "cost_per_subscriber": 0.66, "visits": 21087, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "Sionics SPR GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2021-10-21", "revenue": 34279.83, "cost": 1981.63, "total_emails": 11425, "new_subscribers": 1883, "cost_per_subscriber": 1.05, "visits": 15446, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "Nightfighter GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2021-11-01", "revenue": 32548.76, "cost": 3543.12, "total_emails": 13399, "new_subscribers": 2261, "cost_per_subscriber": 1.57, "visits": 17015, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2021", "campaign": "AR15 Days of Christmas", "giveaway_type": "Christmas", "source": "owned", "date": "2021-12-21", "revenue": 110582.04, "cost": 599.99, "total_emails": 389625, "new_subscribers": 3281, "cost_per_subscriber": 0.18, "visits": 21985, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Gun & Gundies", "giveaway_type": "Uncategorized", "source": "owned", "date": "2022-01-01", "revenue": 22810.08, "cost": 7650.43, "total_emails": 189939, "new_subscribers": 1474, "cost_per_subscriber": 5.19, "visits": 13299, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "RECCE", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-02-01", "revenue": 66178.64, "cost": 3069.34, "total_emails": 246213, "new_subscribers": 2466, "cost_per_subscriber": 1.24, "visits": 22758, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Ultimate Geissele", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-03-01", "revenue": 67207.83, "cost": 5875.79, "total_emails": 354729, "new_subscribers": 523, "cost_per_subscriber": 11.23, "visits": 24430, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Urban Recon SPR Rifle", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-04-01", "revenue": 114936.03, "cost": 6252.18, "total_emails": 274312, "new_subscribers": 2126, "cost_per_subscriber": 2.94, "visits": 18562, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Springfield Saint GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-05-01", "revenue": 20846.85, "cost": 360.7, "total_emails": 295148, "new_subscribers": 3730, "cost_per_subscriber": 0.1, "visits": 16337, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Grey Ghost Precision DMR", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-06-01", "revenue": 48763.2, "cost": 515.08, "total_emails": 266044, "new_subscribers": 2675, "cost_per_subscriber": 0.19, "visits": 16306, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Aero Precision Custom .308", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-07-01", "revenue": 75266.76, "cost": 3732.07, "total_emails": 278227, "new_subscribers": 3389, "cost_per_subscriber": 1.1, "visits": 24387, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "FoxTrot FM-15 Folding Rifle", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-08-01", "revenue": 22087.89, "cost": 1730.26, "total_emails": 228613, "new_subscribers": 1871, "cost_per_subscriber": 0.92, "visits": 12519, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Evolve Weapon Systems", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-09-01", "revenue": 35375.91, "cost": 2965.8, "total_emails": 204166, "new_subscribers": 2022, "cost_per_subscriber": 1.47, "visits": 24364, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Seekins Precision Rifle", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-10-01", "revenue": 15010.94, "cost": 2650, "total_emails": 202266, "new_subscribers": 3321, "cost_per_subscriber": 0.8, "visits": 10379, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2022", "campaign": "Hellion Bullpup Rifle Giveaway", "giveaway_type": "Rifle Build", "source": "owned", "date": "2022-11-01", "revenue": 49428.47, "cost": null, "total_emails": 221630, "new_subscribers": 2430, "cost_per_subscriber": 0, "visits": 13543, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": false}, {"year": "2022", "campaign": "Century Arms AP5 GAW", "giveaway_type": "Pistol Build", "source": "owned", "date": "2022-12-01", "revenue": 31403.34, "cost": 0, "total_emails": 287790, "new_subscribers": 2840, "cost_per_subscriber": 0, "visits": 17582, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "SOLGW Recce AR-15 Rifle", "giveaway_type": "Rifle Build", "source": "owned", "date": "2023-01-01", "revenue": 31763.89, "cost": 2261.79, "total_emails": 262822, "new_subscribers": 2706, "cost_per_subscriber": 0.84, "visits": 14061, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "Springfield-Saint-AR-15", "giveaway_type": "Rifle Build", "source": "owned", "date": "2023-04-01", "revenue": 32742.89, "cost": 3147.55, "total_emails": 198787, "new_subscribers": 1873, "cost_per_subscriber": 1.68, "visits": 14412, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "Aero SOLUS 6.5 Creedmoor", "giveaway_type": "Rifle Build", "source": "owned", "date": "2023-05-01", "revenue": 38536, "cost": 2550.21, "total_emails": 253445, "new_subscribers": 2402, "cost_per_subscriber": 1.06, "visits": 16985, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "Custom Cobalt CK-PRO", "giveaway_type": "Rifle Build", "source": "owned", "date": "2023-06-01", "revenue": 23159.44, "cost": 3445.13, "total_emails": 192477, "new_subscribers": 5246, "cost_per_subscriber": 0.66, "visits": 11170, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "Patriot’s M4E1 Package", "giveaway_type": "Rifle Build", "source": "owned", "date": "2023-07-01", "revenue": 38547.96, "cost": 373, "total_emails": 187784, "new_subscribers": 1954, "cost_per_subscriber": 0.19, "visits": 13027, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "PBP", "giveaway_type": "Optic", "source": "owned", "date": "2023-07-01", "revenue": 26378.01, "cost": 1499.99, "total_emails": 493, "new_subscribers": 106, "cost_per_subscriber": 14.15, "visits": 7086, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "Summer Giveaway (Ice Cream)", "giveaway_type": "Uncategorized", "source": "owned", "date": "2023-08-23", "revenue": 25943.69, "cost": 2062.6, "total_emails": 2715, "new_subscribers": 54, "cost_per_subscriber": 38.2, "visits": 7392, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "SOLGW M4-76 AR-15 Package", "giveaway_type": "Rifle Build", "source": "owned", "date": "2023-09-01", "revenue": 44068.1, "cost": 1999.78, "total_emails": 178897, "new_subscribers": 1941, "cost_per_subscriber": 1.03, "visits": 15132, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "Troy SPC A3", "giveaway_type": "Rifle Build", "source": "owned", "date": "Oct", "revenue": 20683.22, "cost": 1723, "total_emails": 176699, "new_subscribers": 1486, "cost_per_subscriber": 1.16, "visits": 7461, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "Texas Weapon Systems IKR-103", "giveaway_type": "Rifle Build", "source": "owned", "date": "Nov", "revenue": 25827.14, "cost": 2551.58, "total_emails": 194984, "new_subscribers": 2242, "cost_per_subscriber": 1.14, "visits": 9935, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2023", "campaign": "Steyr AUG A3", "giveaway_type": "Rifle Build", "source": "owned", "date": "Dec", "revenue": 32320.13, "cost": 2240.09, "total_emails": 246079, "new_subscribers": 3312, "cost_per_subscriber": 0.68, "visits": 12692, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": true}, {"year": "2024", "campaign": "SOLGW PressCheck", "giveaway_type": "Rifle Build", "source": "owned", "date": "Jan", "revenue": 43185.18, "cost": 5551.58, "total_emails": 269135, "new_subscribers": 9612, "cost_per_subscriber": 0.58, "visits": 16121, "remaining_subs_30d": 464, "rev_per_sub_30d": 1.51, "remaining_subs_90d": 457, "rev_per_sub_90d": 0.36, "complete": true}, {"year": "2024", "campaign": "CMMG RESOLUTE MK4", "giveaway_type": "Rifle Build", "source": "owned", "date": "Feb", "revenue": 53419.05, "cost": 5240.09, "total_emails": 231519, "new_subscribers": 9540, "cost_per_subscriber": 0.55, "visits": 16610, "remaining_subs_30d": 1231, "rev_per_sub_30d": 0.27, "remaining_subs_90d": 1213, "rev_per_sub_90d": 3.47, "complete": true}, {"year": "2024", "campaign": "El Jefe", "giveaway_type": "Rifle Build", "source": "owned", "date": "Mar", "revenue": 51856.2, "cost": 4240.09, "total_emails": 236598, "new_subscribers": 8048, "cost_per_subscriber": 0.53, "visits": 13351, "remaining_subs_30d": 934, "rev_per_sub_30d": 1.25, "remaining_subs_90d": 925, "rev_per_sub_90d": 1.98, "complete": true}, {"year": "2024", "campaign": "Daniel Defense", "giveaway_type": "Rifle Build", "source": "owned", "date": "Apr", "revenue": 15401.73, "cost": 3036.37, "total_emails": 309722, "new_subscribers": 2801, "cost_per_subscriber": 1.08, "visits": 3391, "remaining_subs_30d": 1553, "rev_per_sub_30d": 1.09, "remaining_subs_90d": 1542, "rev_per_sub_90d": 1.37, "complete": true}, {"year": "2024", "campaign": "LaRue", "giveaway_type": "Rifle Build", "source": "owned", "date": "May", "revenue": 51822.08, "cost": 3421.09, "total_emails": 198788, "new_subscribers": 2155, "cost_per_subscriber": 1.59, "visits": 14511, "remaining_subs_30d": 922, "rev_per_sub_30d": 0.35, "remaining_subs_90d": 500, "rev_per_sub_90d": 2.14, "complete": true}, {"year": "2024", "campaign": "Geissele", "giveaway_type": "Rifle Build", "source": "owned", "date": "June", "revenue": 139957.93, "cost": 1090.14, "total_emails": 275550, "new_subscribers": 3593, "cost_per_subscriber": 0.3, "visits": 17246, "remaining_subs_30d": 3199, "rev_per_sub_30d": 2.24, "remaining_subs_90d": 1873, "rev_per_sub_90d": 4.25, "complete": true}, {"year": "2024", "campaign": "Faxon ARAK", "giveaway_type": "Rifle Build", "source": "owned", "date": "July", "revenue": 49845.73, "cost": 4687.48, "total_emails": 154517, "new_subscribers": 10123, "cost_per_subscriber": 0.46, "visits": 14110, "remaining_subs_30d": 9752, "rev_per_sub_30d": 0.38, "remaining_subs_90d": 8615, "rev_per_sub_90d": 0.57, "complete": true}, {"year": "2024", "campaign": "Larue GAW", "giveaway_type": "Rifle Build", "source": "owned", "date": "August", "revenue": 49134.32, "cost": 473.99, "total_emails": 200842, "new_subscribers": 3071, "cost_per_subscriber": 0.15, "visits": 13588, "remaining_subs_30d": 2723, "rev_per_sub_30d": 1.23, "remaining_subs_90d": 1568, "rev_per_sub_90d": 2.35, "complete": true}, {"year": "2024", "campaign": "Seekins HAVAK", "giveaway_type": "Rifle Build", "source": "owned", "date": "September", "revenue": 15377.28, "cost": 515.62, "total_emails": 125219, "new_subscribers": 2074, "cost_per_subscriber": 0.25, "visits": 8260, "remaining_subs_30d": 1815, "rev_per_sub_30d": 0.59, "remaining_subs_90d": 1029, "rev_per_sub_90d": 1.04, "complete": true}, {"year": "2024", "campaign": "FN America", "giveaway_type": "Rifle Build", "source": "owned", "date": "October", "revenue": 19966.38, "cost": 985.92, "total_emails": 187802, "new_subscribers": 3375, "cost_per_subscriber": 0.29, "visits": 10561, "remaining_subs_30d": 3092, "rev_per_sub_30d": 0.45, "remaining_subs_90d": 1912, "rev_per_sub_90d": 3.39, "complete": true}, {"year": "2024", "campaign": "Daniel Defense", "giveaway_type": "Rifle Build", "source": "owned", "date": "December", "revenue": 56460.6, "cost": 4680.12, "total_emails": 19821, "new_subscribers": 6379, "cost_per_subscriber": 0.73, "visits": 26166, "remaining_subs_30d": 5836, "rev_per_sub_30d": 0.88, "remaining_subs_90d": 3746, "rev_per_sub_90d": 2.49, "complete": true}, {"year": "2025", "campaign": "Larue MGR", "giveaway_type": "Rifle Build", "source": "owned", "date": "January", "revenue": 24309.61, "cost": 2544.16, "total_emails": 254150, "new_subscribers": 3694, "cost_per_subscriber": 0.69, "visits": 13765, "remaining_subs_30d": 2344, "rev_per_sub_30d": 1.67, "remaining_subs_90d": 2307, "rev_per_sub_90d": 4.38, "complete": true}, {"year": "2025", "campaign": "Faxon", "giveaway_type": "Rifle Build", "source": "owned", "date": "February", "revenue": 30471.92, "cost": 731.36, "total_emails": 187659, "new_subscribers": 1786, "cost_per_subscriber": 0.41, "visits": 8564, "remaining_subs_30d": 916, "rev_per_sub_30d": 1.15, "remaining_subs_90d": 1007, "rev_per_sub_90d": 9.01, "complete": true}, {"year": "2025", "campaign": "Geiselle", "giveaway_type": "Rifle Build", "source": "owned", "date": "March", "revenue": 27020.04, "cost": 2470.54, "total_emails": 200161, "new_subscribers": 1196, "cost_per_subscriber": 2.07, "visits": 7591, "remaining_subs_30d": 1000, "rev_per_sub_30d": 3.12, "remaining_subs_90d": 491, "rev_per_sub_90d": 6.63, "complete": true}, {"year": "2025", "campaign": "LaRue KRG", "giveaway_type": "Rifle Build", "source": "owned", "date": "April", "revenue": 21638.62, "cost": 1580.39, "total_emails": 181991, "new_subscribers": 1623, "cost_per_subscriber": 0.97, "visits": 8213, "remaining_subs_30d": 844, "rev_per_sub_30d": 6.76, "remaining_subs_90d": 855, "rev_per_sub_90d": 18.59, "complete": true}, {"year": "2025", "campaign": "Maxim Defense", "giveaway_type": "Rifle Build", "source": "owned", "date": "May", "revenue": 14886.27, "cost": 930.37, "total_emails": 179875, "new_subscribers": 3699, "cost_per_subscriber": 0.25, "visits": 6642, "remaining_subs_30d": 1097, "rev_per_sub_30d": 2.96, "remaining_subs_90d": 517, "rev_per_sub_90d": 1.37, "complete": true}, {"year": "2025", "campaign": "Rise Watchman", "giveaway_type": "Rifle Build", "source": "owned", "date": "June", "revenue": 16054.03, "cost": 1233.72, "total_emails": 6872, "new_subscribers": 1207, "cost_per_subscriber": 1.02, "visits": 7705, "remaining_subs_30d": 1018, "rev_per_sub_30d": 2.76, "remaining_subs_90d": 500, "rev_per_sub_90d": 2.03, "complete": true}, {"year": "2025", "campaign": "SOLGW M4L89", "giveaway_type": "Rifle Build", "source": "owned", "date": "July", "revenue": 17765.81, "cost": 929.9, "total_emails": 8768, "new_subscribers": 1967, "cost_per_subscriber": 0.47, "visits": 6505, "remaining_subs_30d": 1664, "rev_per_sub_30d": 3.35, "remaining_subs_90d": 916, "rev_per_sub_90d": 3.87, "complete": true}, {"year": "2025", "campaign": "Evolve Weapons E-15", "giveaway_type": "Rifle Build", "source": "owned", "date": "August", "revenue": 21134.94, "cost": 1706.08, "total_emails": 8319, "new_subscribers": 1543, "cost_per_subscriber": 1.11, "visits": 8826, "remaining_subs_30d": 1338, "rev_per_sub_30d": null, "remaining_subs_90d": 568, "rev_per_sub_90d": 3.47, "complete": true}, {"year": "2025", "campaign": "SMS AR14 ACSS", "giveaway_type": "Rifle Build", "source": "owned", "date": "August", "revenue": null, "cost": null, "total_emails": 2565, "new_subscribers": 74, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 23, "rev_per_sub_30d": null, "remaining_subs_90d": 10, "rev_per_sub_90d": 0, "complete": false}, {"year": "2025", "campaign": "BCM Reece Rifle", "giveaway_type": "Rifle Build", "source": "owned", "date": "September", "revenue": 25687.68, "cost": 2293.4, "total_emails": 10149, "new_subscribers": 933, "cost_per_subscriber": 2.46, "visits": 11807, "remaining_subs_30d": 842, "rev_per_sub_30d": 6.52, "remaining_subs_90d": 758, "rev_per_sub_90d": 2.31, "complete": true}, {"year": "2025", "campaign": "Daniel Defense DDM4V7", "giveaway_type": "Rifle Build", "source": "owned", "date": "October", "revenue": 631.15, "cost": 2610, "total_emails": 6446, "new_subscribers": 1551, "cost_per_subscriber": 1.68, "visits": 1523, "remaining_subs_30d": 1379, "rev_per_sub_30d": 3.31, "remaining_subs_90d": 757, "rev_per_sub_90d": 6.03, "complete": true}, {"year": "2025", "campaign": "11/05 SLX 4.5-27 DEKA", "giveaway_type": "Optic", "source": "owned", "date": "November", "revenue": 14528.21, "cost": 215.79, "total_emails": 4721, "new_subscribers": 830, "cost_per_subscriber": 0.26, "visits": 9125, "remaining_subs_30d": 696, "rev_per_sub_30d": 0.71, "remaining_subs_90d": 144, "rev_per_sub_90d": 5.79, "complete": true}, {"year": "2025", "campaign": "11/11 PLxC 1-8x24F Raptor", "giveaway_type": "Optic", "source": "owned", "date": "November", "revenue": 15417.27, "cost": 638.52, "total_emails": 3662, "new_subscribers": 450, "cost_per_subscriber": 1.42, "visits": 4649, "remaining_subs_30d": 626, "rev_per_sub_30d": 0, "remaining_subs_90d": 167, "rev_per_sub_90d": 2.23, "complete": true}, {"year": "2025", "campaign": "Troy Industries TLR12 556", "giveaway_type": "Rifle Build", "source": "owned", "date": "December", "revenue": null, "cost": 638.52, "total_emails": 1936, "new_subscribers": 691, "cost_per_subscriber": 0.92, "visits": null, "remaining_subs_30d": 586, "rev_per_sub_30d": 0, "remaining_subs_90d": 212, "rev_per_sub_90d": 0, "complete": false}, {"year": "2026", "campaign": "PAO PLxC 1-8 FDE", "giveaway_type": "Optic", "source": "owned", "date": "January", "revenue": 36461.94, "cost": 638.52, "total_emails": 2529, "new_subscribers": 654, "cost_per_subscriber": 0.98, "visits": 14084, "remaining_subs_30d": 564, "rev_per_sub_30d": 1.26, "remaining_subs_90d": 216, "rev_per_sub_90d": 8.32, "complete": true}, {"year": "2026", "campaign": "PAO PLxC 1-8 RDB", "giveaway_type": "Optic", "source": "owned", "date": "January", "revenue": null, "cost": 638.52, "total_emails": 8231, "new_subscribers": 1464, "cost_per_subscriber": 0.44, "visits": null, "remaining_subs_30d": 1245, "rev_per_sub_30d": 4.9, "remaining_subs_90d": 467, "rev_per_sub_90d": 12.11, "complete": false}, {"year": "2026", "campaign": "Faxon", "giveaway_type": "3rd Party", "source": "owned", "date": "June", "revenue": null, "cost": null, "total_emails": 12334, "new_subscribers": 9834, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 9388, "rev_per_sub_30d": 0.14, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": false}, {"year": "2026", "campaign": "GOA HK", "giveaway_type": "3rd Party", "source": "owned", "date": "June", "revenue": null, "cost": null, "total_emails": 10642, "new_subscribers": 2151, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 1769, "rev_per_sub_30d": 0.39, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": false}, {"year": "2026", "campaign": "HTX-1 1776 GAW", "giveaway_type": "Optic", "source": "owned", "date": "July", "revenue": null, "cost": 749.99, "total_emails": 16422, "new_subscribers": 2731, "cost_per_subscriber": 0.27, "visits": null, "remaining_subs_30d": 2028, "rev_per_sub_30d": 5.59, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": false}, {"year": "2026", "campaign": "Odin Works", "giveaway_type": "3rd Party", "source": "owned", "date": "July", "revenue": null, "cost": null, "total_emails": null, "new_subscribers": 3414, "cost_per_subscriber": null, "visits": null, "remaining_subs_30d": 845, "rev_per_sub_30d": 0, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": false}, {"year": "2026", "campaign": "Faxon", "giveaway_type": "3rd Party", "source": "owned", "date": "September", "revenue": null, "cost": null, "total_emails": 18773, "new_subscribers": null, "cost_per_subscriber": null, "visits": null, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": null, "rev_per_sub_90d": null, "complete": false}, {"year": "2024", "campaign": "NRA Freedom Defender", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2024-05-01", "revenue": null, "cost": null, "total_emails": null, "new_subscribers": 3740, "cost_per_subscriber": null, "visits": null, "remaining_subs_30d": 2064, "rev_per_sub_30d": 0.95, "remaining_subs_90d": 1888, "rev_per_sub_90d": 3.15, "complete": false}, {"year": "2025", "campaign": "ARC-Pistol GAW", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-01-01", "revenue": null, "cost": 157, "total_emails": 9581, "new_subscribers": 4911, "cost_per_subscriber": 0.03, "visits": null, "remaining_subs_30d": 4417, "rev_per_sub_30d": 0.97, "remaining_subs_90d": 2071, "rev_per_sub_90d": 1.26, "complete": false}, {"year": "2025", "campaign": "MTP-GAW", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-02-01", "revenue": null, "cost": 140, "total_emails": 304, "new_subscribers": 227, "cost_per_subscriber": 0.62, "visits": null, "remaining_subs_30d": 201, "rev_per_sub_30d": 0, "remaining_subs_90d": 134, "rev_per_sub_90d": 0, "complete": false}, {"year": "2025", "campaign": "PDN-GAW", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-03-01", "revenue": null, "cost": 1293, "total_emails": 2604, "new_subscribers": 1932, "cost_per_subscriber": 0.67, "visits": null, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": 44, "rev_per_sub_90d": 0, "complete": false}, {"year": "2025", "campaign": "Rugged Utility EDC", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-04-01", "revenue": null, "cost": 405, "total_emails": 15829, "new_subscribers": 7569, "cost_per_subscriber": 0.05, "visits": null, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": 22, "rev_per_sub_90d": 0, "complete": false}, {"year": "2025", "campaign": "Moonshine", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-05-01", "revenue": null, "cost": null, "total_emails": 11533, "new_subscribers": 4407, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 4007, "rev_per_sub_30d": 3.31, "remaining_subs_90d": 2406, "rev_per_sub_90d": 2.29, "complete": false}, {"year": "2025", "campaign": "Infinity Targets", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-04-01", "revenue": null, "cost": null, "total_emails": 7771, "new_subscribers": 5831, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 3727, "rev_per_sub_30d": 0.91, "remaining_subs_90d": 2101, "rev_per_sub_90d": 0.33, "complete": false}, {"year": "2025", "campaign": "Faxon Firearms", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-09-03", "revenue": null, "cost": null, "total_emails": 4230, "new_subscribers": 2215, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 1591, "rev_per_sub_30d": 0.6, "remaining_subs_90d": 623, "rev_per_sub_90d": 0, "complete": false}], "sponsored_summary": {"campaigns": [{"year": "2024", "campaign": "NRA Freedom Defender", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2024-05-01", "revenue": null, "cost": null, "total_emails": null, "new_subscribers": 3740, "cost_per_subscriber": null, "visits": null, "remaining_subs_30d": 2064, "rev_per_sub_30d": 0.95, "remaining_subs_90d": 1888, "rev_per_sub_90d": 3.15, "complete": false, "sales_30d": 1964.42, "sales_90d": 5953.89}, {"year": "2025", "campaign": "ARC-Pistol GAW", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-01-01", "revenue": null, "cost": 157, "total_emails": 9581, "new_subscribers": 4911, "cost_per_subscriber": 0.03, "visits": null, "remaining_subs_30d": 4417, "rev_per_sub_30d": 0.97, "remaining_subs_90d": 2071, "rev_per_sub_90d": 1.26, "complete": false, "sales_30d": 4285.86, "sales_90d": 2602.92}, {"year": "2025", "campaign": "MTP-GAW", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-02-01", "revenue": null, "cost": 140, "total_emails": 304, "new_subscribers": 227, "cost_per_subscriber": 0.62, "visits": null, "remaining_subs_30d": 201, "rev_per_sub_30d": 0, "remaining_subs_90d": 134, "rev_per_sub_90d": 0, "complete": false, "sales_30d": 0, "sales_90d": 0}, {"year": "2025", "campaign": "PDN-GAW", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-03-01", "revenue": null, "cost": 1293, "total_emails": 2604, "new_subscribers": 1932, "cost_per_subscriber": 0.67, "visits": null, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": 44, "rev_per_sub_90d": 0, "complete": false, "sales_30d": 0, "sales_90d": 0}, {"year": "2025", "campaign": "Rugged Utility EDC", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-04-01", "revenue": null, "cost": 405, "total_emails": 15829, "new_subscribers": 7569, "cost_per_subscriber": 0.05, "visits": null, "remaining_subs_30d": null, "rev_per_sub_30d": null, "remaining_subs_90d": 22, "rev_per_sub_90d": 0, "complete": false, "sales_30d": 0, "sales_90d": 0}, {"year": "2025", "campaign": "Moonshine", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-05-01", "revenue": null, "cost": null, "total_emails": 11533, "new_subscribers": 4407, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 4007, "rev_per_sub_30d": 3.31, "remaining_subs_90d": 2406, "rev_per_sub_90d": 2.29, "complete": false, "sales_30d": 13258.34, "sales_90d": 5519.23}, {"year": "2025", "campaign": "Infinity Targets", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-04-01", "revenue": null, "cost": null, "total_emails": 7771, "new_subscribers": 5831, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 3727, "rev_per_sub_30d": 0.91, "remaining_subs_90d": 2101, "rev_per_sub_90d": 0.33, "complete": false, "sales_30d": 3380.67, "sales_90d": 703.66}, {"year": "2025", "campaign": "Faxon Firearms", "giveaway_type": "3rd Party", "source": "sponsored", "date": "2025-09-03", "revenue": null, "cost": null, "total_emails": 4230, "new_subscribers": 2215, "cost_per_subscriber": 0, "visits": null, "remaining_subs_30d": 1591, "rev_per_sub_30d": 0.6, "remaining_subs_90d": 623, "rev_per_sub_90d": 0, "complete": false, "sales_30d": 950.85, "sales_90d": 0}], "totals": {"campaigns": 8, "new_subscribers": 30832, "cost": 1995, "campaigns_with_cost": 4, "sales_30d": 23840.14, "sales_90d": 14779.7, "campaigns_with_90d": 8, "avg_cost_per_subscriber": 0.07, "avg_rev_per_sub_30d": 1.49, "avg_rev_per_sub_90d": 1.59}}, "year_summary": [{"year": "2019", "campaigns": 11, "campaigns_complete": 11, "total_revenue": 297205.05, "total_cost": 13962.57, "total_new_subscribers": 27653, "total_emails_sent": 1334685, "avg_cost_per_subscriber": 0.5, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0, "retention_coverage_30d": 2, "retention_coverage_90d": 0}, {"year": "2020", "campaigns": 11, "campaigns_complete": 11, "total_revenue": 1032079.72, "total_cost": 83207.56, "total_new_subscribers": 39690, "total_emails_sent": 3436298, "avg_cost_per_subscriber": 2.1, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0, "retention_coverage_30d": 1, "retention_coverage_90d": 0}, {"year": "2021", "campaigns": 12, "campaigns_complete": 12, "total_revenue": 1033065.35, "total_cost": 41758.7, "total_new_subscribers": 44961, "total_emails_sent": 3606072, "avg_cost_per_subscriber": 0.93, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0, "retention_coverage_30d": 0, "retention_coverage_90d": 0}, {"year": "2022", "campaigns": 12, "campaigns_complete": 11, "total_revenue": 519887.47, "total_cost": 34801.65, "total_new_subscribers": 28867, "total_emails_sent": 3049077, "avg_cost_per_subscriber": 1.21, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0, "retention_coverage_30d": 0, "retention_coverage_90d": 0}, {"year": "2023", "campaigns": 11, "campaigns_complete": 11, "total_revenue": 339970.47, "total_cost": 23854.72, "total_new_subscribers": 23322, "total_emails_sent": 1895182, "avg_cost_per_subscriber": 1.02, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0, "retention_coverage_30d": 0, "retention_coverage_90d": 0}, {"year": "2024", "campaigns": 12, "campaigns_complete": 11, "total_revenue": 546426.48, "total_cost": 33922.49, "total_new_subscribers": 64511, "total_emails_sent": 2209513, "avg_cost_per_subscriber": 0.56, "avg_rev_per_sub_30d": 0.83, "coverage_30d": 12, "avg_rev_per_sub_90d": 1.93, "coverage_90d": 12, "retention_coverage_30d": 12, "retention_coverage_90d": 12}, {"year": "2025", "campaigns": 21, "campaigns_complete": 12, "total_revenue": 229545.55, "total_cost": 17884.23, "total_new_subscribers": 48336, "total_emails_sent": 1109126, "avg_cost_per_subscriber": 0.42, "avg_rev_per_sub_30d": 2.15, "coverage_30d": 17, "avg_rev_per_sub_90d": 3.73, "coverage_90d": 21, "retention_coverage_30d": 19, "retention_coverage_90d": 21}, {"year": "2026", "campaigns": 7, "campaigns_complete": 1, "total_revenue": 36461.94, "total_cost": 638.52, "total_new_subscribers": 20248, "total_emails_sent": 68931, "avg_cost_per_subscriber": 0.12, "avg_rev_per_sub_30d": 1.27, "coverage_30d": 6, "avg_rev_per_sub_90d": 10.91, "coverage_90d": 2, "retention_coverage_30d": 6, "retention_coverage_90d": 2}], "overall": {"total_campaigns": 97, "total_campaigns_complete": 80, "total_campaigns_sponsored": 8, "total_revenue": 4034642.03, "total_cost": 250030.44, "total_new_subscribers": 297588, "total_emails_sent": 16708884, "years_covered": "2019-2026", "avg_rev_per_sub_30d": 1.39, "coverage_30d": 35, "avg_rev_per_sub_90d": 2.78, "coverage_90d": 35, "avg_cost_per_subscriber": 0.87}, "type_summary": [{"type": "Rifle Build", "campaigns": 59, "total_new_subscribers": 184449, "avg_cost_per_subscriber": 0.95, "avg_rev_per_sub_30d": 1.42, "coverage_30d": 21, "avg_rev_per_sub_90d": 2.93, "coverage_90d": 23}, {"type": "3rd Party", "campaigns": 15, "total_new_subscribers": 56472, "avg_cost_per_subscriber": 0.19, "avg_rev_per_sub_30d": 0.92, "coverage_30d": 9, "avg_rev_per_sub_90d": 1.59, "coverage_90d": 8}, {"type": "Pistol Build", "campaigns": 12, "total_new_subscribers": 38106, "avg_cost_per_subscriber": 1.01, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0}, {"type": "Optic", "campaigns": 6, "total_new_subscribers": 6235, "avg_cost_per_subscriber": 0.7, "avg_rev_per_sub_30d": 3.61, "coverage_30d": 5, "avg_rev_per_sub_90d": 8.71, "coverage_90d": 4}, {"type": "Christmas", "campaigns": 2, "total_new_subscribers": 6338, "avg_cost_per_subscriber": 1.18, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0}, {"type": "Uncategorized", "campaigns": 2, "total_new_subscribers": 1528, "avg_cost_per_subscriber": 6.36, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0}, {"type": "Gift Card", "campaigns": 1, "total_new_subscribers": 4460, "avg_cost_per_subscriber": 2.3, "avg_rev_per_sub_30d": null, "coverage_30d": 0, "avg_rev_per_sub_90d": null, "coverage_90d": 0}]};
+
+const fmtUSD = n => n == null ? '—' : '$' + Math.round(n).toLocaleString('en-US');
+const fmtUSD2 = n => n == null ? 'n/a' : '$' + n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const fmtInt = n => n == null ? '—' : Math.round(n).toLocaleString('en-US');
+if (typeof Chart !== 'undefined') { Chart.defaults.font.family = "IBM Plex Sans"; Chart.defaults.color = '#9db3b4'; }
+
+
+
+/* ---------------- KPI strip ---------------- */
+const ov = DATA.overall;
+const kpis = [
+  {label:'Total revenue attributed', val: fmtUSD(ov.total_revenue), cls:'brass'},
+  {label:'Total sweepstakes spend', val: fmtUSD(ov.total_cost), cls:''},
+  {label:'Avg. cost per subscriber', val: fmtUSD2(ov.avg_cost_per_subscriber), cls:''},
+  {label:'Avg. revenue per subscriber · 30 days (' + ov.coverage_30d + ' sweepstakes)', val: fmtUSD2(ov.avg_rev_per_sub_30d), cls:'olive'},
+  {label:'Avg. revenue per subscriber · 90 days (' + ov.coverage_90d + ' sweepstakes)', val: fmtUSD2(ov.avg_rev_per_sub_90d), cls:'olive'},
+  {label:'Initial new subscribers', val: fmtInt(ov.total_new_subscribers), cls:'brass'},
+  {label:'Sweepstakes run · ' + ov.years_covered, val: ov.total_campaigns, cls:''},
+];
+document.getElementById('kpiStrip').innerHTML = kpis.map(k =>
+  `<div class="kpi"><div class="num ${k.cls}">${k.val}</div><div class="label">${k.label}</div></div>`
+).join('');
+
+/* ---------------- Shared data ---------------- */
+const ys = DATA.year_summary;
+const years = ys.map(y=>y.year);
+
+/* ---------------- Year tabs + summary (defined first, independent of charts) ---------------- */
+let activeYear = years[years.length-1];
+let sortKey = 'date';
+let sortDir = 1;
+
+const SP_TAB = 'Sponsored';
+const hasSponsored = !!(DATA.sponsored_summary && DATA.sponsored_summary.campaigns.length);
+function showView(){
+  const sponsored = activeYear === SP_TAB;
+  document.getElementById('yearView').style.display = sponsored ? 'none' : '';
+  document.getElementById('sponsoredSection').style.display = (sponsored && hasSponsored) ? '' : 'none';
+  if (sponsored) { if (typeof renderSponsoredChart === 'function') renderSponsoredChart(); }
+  else renderYear();
+}
+function renderTabs(){
+  const el = document.getElementById('yearTabs');
+  const tabs = hasSponsored ? years.concat([SP_TAB]) : years;
+  el.innerHTML = tabs.map(y =>
+    `<div class="year-tab ${y===activeYear?'active':''}" data-year="${y}">${y}</div>`
+  ).join('');
+  el.querySelectorAll('.year-tab').forEach(t=>{
+    t.addEventListener('click', ()=>{ activeYear = t.dataset.year; renderTabs(); showView(); });
+  });
+}
+
+/* ---------------- Retention chart (subscribers remaining at 30/90 days) ---------------- */
+let retChart = null;
+function renderRetentionChart(){
+  const inner = document.getElementById('retChartInner'), empty = document.getElementById('retEmpty');
+  if (retChart) { retChart.destroy(); retChart = null; }
+  const rows = DATA.campaigns.filter(c=>c.year===activeYear && (c.remaining_subs_30d!=null || c.remaining_subs_90d!=null));
+  if (!rows.length) { inner.style.display='none'; empty.style.display='block'; return; }
+  inner.style.display='block'; empty.style.display='none';
+  inner.style.height = (rows.length*26 + 50) + 'px';
+  if (typeof Chart === 'undefined') return;
+  const pct = (v,c) => (v!=null && c.new_subscribers) ? ' (' + Math.round(v/c.new_subscribers*100) + '% of ' + fmtInt(c.new_subscribers) + ' new)' : '';
+  retChart = new Chart(document.getElementById('retentionChart'), {
+    type:'bar',
+    data:{
+      labels: rows.map(c=>c.campaign.length>20 ? c.campaign.slice(0,19)+'…' : c.campaign),
+      datasets:[
+        { label:'Remaining after 30 days', data: rows.map(c=>c.remaining_subs_30d), backgroundColor:'#ff6a1f', borderColor:'#000', borderWidth:2, borderRadius:0 },
+        { label:'Remaining after 90 days', data: rows.map(c=>c.remaining_subs_90d), backgroundColor:'#3fd9d0', borderColor:'#000', borderWidth:2, borderRadius:0 },
+      ]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#152a2f', borderColor:'#3fd9d0', borderWidth:1,
+          titleFont:{family:'IBM Plex Mono', size:11}, bodyFont:{family:'IBM Plex Sans', size:12},
+          callbacks:{ title: items => rows[items[0].dataIndex].campaign, label: ctx => {
+            const c = rows[ctx.dataIndex];
+            return ctx.parsed.x == null ? '  ' + ctx.dataset.label + ': not tracked yet'
+              : '  ' + ctx.dataset.label + ': ' + fmtInt(ctx.parsed.x) + pct(ctx.parsed.x, c);
+          } }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'#1f3a40'}, beginAtZero:true, ticks:{ callback:v=>fmtInt(v), font:{size:11} } },
+        y:{ grid:{display:false}, ticks:{ autoSkip:false, font:{family:'IBM Plex Sans', size:11.5} } }
+      }
+    }
+  });
+}
+
+function renderYear(){
+  const summary = ys.find(y=>y.year===activeYear);
+  const partial = summary.campaigns_complete < summary.campaigns;
+  const track30 = summary.coverage_30d > 0;
+  const track90 = summary.coverage_90d > 0;
+  document.getElementById('yearSummary').innerHTML = `
+    <div class="cell"><div class="v">${fmtUSD(summary.total_revenue)}</div><div class="k">Revenue${partial?' (reported)':''}</div></div>
+    <div class="cell"><div class="v">${fmtUSD(summary.total_cost)}</div><div class="k">Cost${partial?' (reported)':''}</div></div>
+    <div class="cell"><div class="v">${fmtInt(summary.total_new_subscribers)}</div><div class="k">New subscribers</div></div>
+    <div class="cell"><div class="v">${fmtUSD2(summary.avg_cost_per_subscriber)}</div><div class="k">Cost / subscriber</div></div>
+    <div class="cell"><div class="v">${track30 ? fmtUSD2(summary.avg_rev_per_sub_30d) : 'not tracked'}</div><div class="k">Rev / sub · 30d${track30?' ('+summary.coverage_30d+' sweeps)':''}</div></div>
+    <div class="cell"><div class="v">${track90 ? fmtUSD2(summary.avg_rev_per_sub_90d) : 'not tracked'}</div><div class="k">Rev / sub · 90d${track90?' ('+summary.coverage_90d+' sweeps)':''}</div></div>
+  `;
+  renderTable();
+  renderSubBehavior();
+  renderYearBoards();
+  renderRetentionChart();
+}
+
+/* ---------------- Ranked horizontal bar charts (leaderboards) ---------------- */
+const rankCharts = {};
+const valueLabelsFor = fmt => ({
+  id:'valueLabels',
+  afterDatasetsDraw(chart){
+    const {ctx} = chart;
+    ctx.save(); ctx.font = '13px Electrolize, sans-serif'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#f3e9d8';
+    chart.getDatasetMeta(0).data.forEach((bar,i)=>{
+      const v = chart.data.datasets[0].data[i];
+      if (v==null) return;
+      ctx.fillText(fmt(v), bar.x + 8, bar.y);
+    });
+    ctx.restore();
+  }
+});
+function renderRankChart(id, rows, valFn, color, fmt, labelFn, emptyMsg){
+  const inner = document.getElementById(id+'Inner'), empty = document.getElementById(id+'Empty');
+  if (rankCharts[id]) { rankCharts[id].destroy(); rankCharts[id] = null; }
+  if (!rows.length) { inner.style.display='none'; empty.style.display='block'; empty.textContent = emptyMsg; return; }
+  inner.style.display='block'; empty.style.display='none';
+  inner.style.height = (rows.length*(Array.isArray(labelFn(rows[0])) ? 40 : 30) + 50) + 'px';
+  if (typeof Chart === 'undefined') return;
+  rankCharts[id] = new Chart(document.getElementById(id), {
+    type:'bar',
+    plugins:[valueLabelsFor(fmt)],
+    data:{
+      labels: rows.map((c,i)=>{ const l = labelFn(c); const pre = String(i+1).padStart(2,'0') + '  '; return Array.isArray(l) ? [pre + l[0], l[1]] : pre + l; }),
+      datasets:[{ data: rows.map(valFn), backgroundColor:color, borderColor:'#000', borderWidth:2, borderRadius:0 }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      layout:{ padding:{ right:56 } },
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#152a2f', borderColor:'#3fd9d0', borderWidth:1,
+          titleFont:{family:'IBM Plex Mono', size:11}, bodyFont:{family:'IBM Plex Sans', size:12},
+          callbacks:{ title: items => rows[items[0].dataIndex].campaign + ' (' + rows[items[0].dataIndex].year + ')', label: ctx => '  ' + fmt(ctx.parsed.x) }
+        }
+      },
+      scales:{
+        x:{ grid:{color:'#1f3a40'}, beginAtZero:true, ticks:{ callback:v=>fmt(v), font:{size:11} } },
+        y:{ grid:{display:false}, ticks:{ autoSkip:false, font:{family:'IBM Plex Sans', size:11.5} } }
+      }
+    }
+  });
+}
+const trunc = (t,n) => t.length>n ? t.slice(0,n-1)+'…' : t;
+
+function renderYearBoards(){
+  const yearCampaigns = DATA.campaigns.filter(c=>c.year===activeYear);
+  const lowCPSYear = yearCampaigns
+    .filter(c=>c.cost!=null && c.cost_per_subscriber!=null && c.cost_per_subscriber>0)
+    .sort((a,b)=>a.cost_per_subscriber-b.cost_per_subscriber);
+  const topRev90Year = yearCampaigns
+    .filter(c=>c.rev_per_sub_90d!=null)
+    .sort((a,b)=>b.rev_per_sub_90d-a.rev_per_sub_90d);
+  document.getElementById('cpsYearLabel').textContent = activeYear;
+  document.getElementById('rev90YearLabel').textContent = activeYear;
+  renderRankChart('cpsYearChart', lowCPSYear, c=>c.cost_per_subscriber, '#ffa63d', fmtUSD2, c=>trunc(c.campaign,24), 'No complete cost data for this year.');
+  renderRankChart('rev90YearChart', topRev90Year, c=>c.rev_per_sub_90d, '#6fe0a8', fmtUSD2, c=>trunc(c.campaign,24), '90‑day data not tracked this year.');
+}
+
+function renderTable(){
+  let rows = DATA.campaigns.filter(c=>c.year===activeYear);
+  rows.sort((a,b)=>{
+    let av = a[sortKey], bv = b[sortKey];
+    if(av==null && bv==null) return 0;
+    if(av==null) return 1;
+    if(bv==null) return -1;
+    if(typeof av === 'string') return av.localeCompare(bv) * sortDir;
+    return (av-bv) * sortDir;
+  });
+  document.getElementById('tableBody').innerHTML = rows.map(c=>{
+    let monthLabel = '—';
+    if(c.date){
+      const m = c.date.match(/^\d{4}-(\d{2})-\d{2}$/);
+      const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      monthLabel = m ? monthNames[parseInt(m[1],10)-1] : c.date;
+    }
+    const sponsoredBadge = c.source==='sponsored' ? ' <span class="flag" style="color:var(--sky)">· sponsored</span>' : '';
+    return `<tr>
+      <td class="name">${c.campaign}${c.complete?'':' <span class="flag">· partial data</span>'}${sponsoredBadge}</td>
+      <td>${c.giveaway_type}</td>
+      <td>${monthLabel}</td>
+      <td class="num">${fmtUSD(c.revenue)}</td>
+      <td class="num">${fmtUSD(c.cost)}</td>
+      <td class="num">${fmtInt(c.new_subscribers)}</td>
+      <td class="num">${fmtUSD2(c.cost_per_subscriber)}</td>
+      <td class="num">${fmtUSD2(c.rev_per_sub_30d)}</td>
+      <td class="num">${fmtUSD2(c.rev_per_sub_90d)}</td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('#campaignTable thead th').forEach(th=>{
+    th.classList.toggle('sorted', th.dataset.key===sortKey);
+    const base = th.textContent.replace(/\s*[▲▼]$/,'');
+    th.innerHTML = base + (th.dataset.key===sortKey ? `<span class="arrow">${sortDir===1?'▲':'▼'}</span>` : '');
+  });
+}
+
+/* ---------------- Subscriber behavior table ---------------- */
+let subSortKey = 'campaign';
+let subSortDir = 1;
+const fmtPct = n => n == null ? '—' : Math.round(n*100) + '%';
+
+function computeSubRows(){
+  return DATA.campaigns.filter(c=>c.year===activeYear).map(c=>{
+    const retention_30d = (c.remaining_subs_30d!=null && c.new_subscribers) ? c.remaining_subs_30d/c.new_subscribers : null;
+    const retention_90d = (c.remaining_subs_90d!=null && c.new_subscribers) ? c.remaining_subs_90d/c.new_subscribers : null;
+    return { ...c, retention_30d, retention_90d };
+  });
+}
+
+let subBehaviorChartInstance = null;
+function renderSubBehaviorChart(rows){
+  if (typeof Chart === 'undefined') return;
+  try {
+    const labels = rows.map(c=>c.campaign);
+    const newSubs = rows.map(c=>c.new_subscribers);
+    const rem30 = rows.map(c=>c.remaining_subs_30d);
+    const rem90 = rows.map(c=>c.remaining_subs_90d);
+
+    document.getElementById('subChartInner').style.height = (rows.length * 34 + 50) + 'px';
+
+    if (subBehaviorChartInstance) {
+      subBehaviorChartInstance.data.labels = labels;
+      subBehaviorChartInstance.data.datasets[0].data = newSubs;
+      subBehaviorChartInstance.data.datasets[1].data = rem30;
+      subBehaviorChartInstance.data.datasets[2].data = rem90;
+      subBehaviorChartInstance.update();
+      return;
+    }
+
+    subBehaviorChartInstance = new Chart(document.getElementById('subBehaviorChart'), {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label:'New subscribers', data:newSubs, backgroundColor:'#ffb347', borderColor:'#000', borderWidth:2, borderRadius:0 },
+          { label:'Remaining @ 30d', data:rem30, backgroundColor:'#ff6a1f', borderColor:'#000', borderWidth:2, borderRadius:0 },
+          { label:'Remaining @ 90d', data:rem90, backgroundColor:'#3fd9d0', borderColor:'#000', borderWidth:2, borderRadius:0 },
+        ]
+      },
+      options: {
+        indexAxis:'y', responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode:'index', intersect:false },
+        plugins: {
+          legend: { display:false },
+          tooltip: {
+            backgroundColor:'#152a2f', borderColor:'#3fd9d0', borderWidth:1,
+            titleFont:{family:'IBM Plex Mono', size:11},
+            bodyFont:{family:'IBM Plex Sans', size:12},
+            callbacks: {
+              label: ctx => ctx.parsed.x == null ? '  ' + ctx.dataset.label + ': not tracked' : '  ' + ctx.dataset.label + ': ' + fmtInt(ctx.parsed.x)
+            }
+          }
+        },
+        scales: {
+          x: { grid:{color:'#1f3a40'}, beginAtZero:true, ticks:{ callback: v => fmtInt(v), font:{size:11} } },
+          y: { grid:{display:false}, ticks:{ autoSkip:false, font:{family:'IBM Plex Sans', size:11.5} } }
+        }
+      }
+    });
+  } catch(err){
+    console.error('Subscriber behavior chart failed:', err);
+    const el = document.getElementById('subChartInner');
+    if(el) el.innerHTML = '<div style="color:var(--ink-dim); font-size:13px; padding-top:20px;">Chart failed to load.</div>';
+  }
+}
+
+function renderSubBehavior(){
+  const baseRows = computeSubRows();
+  renderSubBehaviorChart(baseRows);
+
+  let rows = [...baseRows];
+  rows.sort((a,b)=>{
+    let av = a[subSortKey], bv = b[subSortKey];
+    if(av==null && bv==null) return 0;
+    if(av==null) return 1;
+    if(bv==null) return -1;
+    if(typeof av === 'string') return av.localeCompare(bv) * subSortDir;
+    return (av-bv) * subSortDir;
+  });
+  document.getElementById('subBehaviorBody').innerHTML = rows.map(c=>{
+    const has30 = c.remaining_subs_30d != null;
+    const has90 = c.remaining_subs_90d != null;
+    return `<tr>
+      <td class="name">${c.campaign}${c.source==='sponsored'?' <span class="flag" style="color:var(--sky)">· sponsored</span>':''}</td>
+      <td>${c.giveaway_type}</td>
+      <td class="num">${fmtInt(c.new_subscribers)}</td>
+      <td class="num">${has30 ? fmtInt(c.remaining_subs_30d) : 'not tracked'}</td>
+      <td class="num">${has30 ? fmtPct(c.retention_30d) : '—'}</td>
+      <td class="num">${has90 ? fmtInt(c.remaining_subs_90d) : 'not tracked'}</td>
+      <td class="num">${has90 ? fmtPct(c.retention_90d) : '—'}</td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('#subBehaviorTable thead th').forEach(th=>{
+    th.classList.toggle('sorted', th.dataset.key===subSortKey);
+    const base = th.textContent.replace(/\s*[▲▼]$/,'');
+    th.innerHTML = base + (th.dataset.key===subSortKey ? `<span class="arrow">${subSortDir===1?'▲':'▼'}</span>` : '');
+  });
+}
+
+document.querySelectorAll('#subBehaviorTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(subSortKey===key){ subSortDir *= -1; } else { subSortKey = key; subSortDir = key==='campaign' ? 1 : -1; }
+    renderSubBehavior();
+  });
+});
+
+document.querySelectorAll('#campaignTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(sortKey===key){ sortDir *= -1; } else { sortKey = key; sortDir = (key==='campaign'||key==='date') ? 1 : -1; }
+    renderTable();
+  });
+});
+
+renderTabs();
+renderYear();
+
+/* ---------------- Leaderboards (independent of charts) ---------------- */
+const lowCPS = [...DATA.campaigns]
+  .filter(c=>c.cost!=null && c.cost_per_subscriber!=null && c.cost_per_subscriber>0)
+  .sort((a,b)=>a.cost_per_subscriber-b.cost_per_subscriber)
+  .slice(0,8);
+const topRev90 = [...DATA.campaigns]
+  .filter(c=>c.rev_per_sub_90d!=null)
+  .sort((a,b)=>b.rev_per_sub_90d-a.rev_per_sub_90d)
+  .slice(0,8);
+
+renderRankChart('cpsChart', lowCPS, c=>c.cost_per_subscriber, '#ffa63d', fmtUSD2, c=>[trunc(c.campaign,15), String(c.year)], 'No sweepstakes with complete cost data.');
+renderRankChart('rev90Chart', topRev90, c=>c.rev_per_sub_90d, '#6fe0a8', fmtUSD2, c=>[trunc(c.campaign,15), String(c.year)], 'No 90‑day data tracked yet.');
+
+/* ---------------- Performance by giveaway type ---------------- */
+let typeSortKey = 'campaigns';
+let typeSortDir = -1;
+
+function renderTypeTable(){
+  let rows = [...DATA.type_summary];
+  rows.sort((a,b)=>{
+    let av = a[typeSortKey], bv = b[typeSortKey];
+    if(av==null && bv==null) return 0;
+    if(av==null) return 1;
+    if(bv==null) return -1;
+    if(typeof av === 'string') return av.localeCompare(bv) * typeSortDir;
+    return (av-bv) * typeSortDir;
+  });
+  document.getElementById('typeTableBody').innerHTML = rows.map(t=>`
+    <tr>
+      <td class="name">${t.type}</td>
+      <td class="num">${t.campaigns}</td>
+      <td class="num">${fmtInt(t.total_new_subscribers)}</td>
+      <td class="num">${fmtUSD2(t.avg_cost_per_subscriber)}</td>
+      <td class="num">${t.coverage_30d>0 ? fmtUSD2(t.avg_rev_per_sub_30d) : 'not tracked'}</td>
+      <td class="num">${t.coverage_90d>0 ? fmtUSD2(t.avg_rev_per_sub_90d) : 'not tracked'}</td>
+    </tr>`).join('');
+  document.querySelectorAll('#typeTable thead th').forEach(th=>{
+    th.classList.toggle('sorted', th.dataset.key===typeSortKey);
+    const base = th.textContent.replace(/\s*[▲▼]$/,'');
+    th.innerHTML = base + (th.dataset.key===typeSortKey ? `<span class="arrow">${typeSortDir===1?'▲':'▼'}</span>` : '');
+  });
+}
+
+document.querySelectorAll('#typeTable thead th').forEach(th=>{
+  th.addEventListener('click', ()=>{
+    const key = th.dataset.key;
+    if(typeSortKey===key){ typeSortDir *= -1; } else { typeSortKey = key; typeSortDir = key==='type' ? 1 : -1; }
+    renderTypeTable();
+  });
+});
+
+renderTypeTable();
+
+/* ---------------- Sponsored section ---------------- */
+(function(){
+  const sp = DATA.sponsored_summary;
+  if(!sp || !sp.campaigns.length) return;
+  const t = sp.totals;
+  const mon = d => { const m = d && d.match(/^\d{4}-(\d{2})-\d{2}$/); return m ? ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m[1]-1] + ' ' + d.slice(0,4) : (d||'—'); };
+  document.getElementById('sponsoredSummary').innerHTML = `
+    <div class="cell"><div class="v">${t.campaigns}</div><div class="k">Sponsored giveaways</div></div>
+    <div class="cell"><div class="v">${fmtInt(t.new_subscribers)}</div><div class="k">New subscribers</div></div>
+    <div class="cell"><div class="v">${fmtUSD(t.cost)}</div><div class="k">Reported cost (${t.campaigns_with_cost} of ${t.campaigns})</div></div>
+    <div class="cell"><div class="v">${fmtUSD2(t.avg_cost_per_subscriber)}</div><div class="k">Cost / subscriber</div></div>
+    <div class="cell"><div class="v">${fmtUSD(t.sales_30d)}</div><div class="k">Sales · 30-day check-in</div></div>
+    <div class="cell"><div class="v">${fmtUSD(t.sales_90d)}</div><div class="k">Sales · 90-day check-in (${t.campaigns_with_90d} camp.)</div></div>
+    <div class="cell"><div class="v">${fmtUSD2(t.avg_rev_per_sub_90d)}</div><div class="k">Rev / sub · 90d</div></div>`;
+  let spChart = null;
+  window.renderSponsoredChart = function(){
+    if (spChart) { spChart.destroy(); spChart = null; }
+    if (typeof Chart === 'undefined') return;
+    const rows = sp.campaigns.filter(c=>c.remaining_subs_30d!=null || c.remaining_subs_90d!=null);
+    document.getElementById('spRetInner').style.height = (rows.length*26 + 50) + 'px';
+    const pct = (v,c) => (v!=null && c.new_subscribers) ? ' (' + Math.round(v/c.new_subscribers*100) + '% of ' + fmtInt(c.new_subscribers) + ' new)' : '';
+    spChart = new Chart(document.getElementById('sponsoredRetChart'), {
+      type:'bar',
+      data:{
+        labels: rows.map(c=>c.campaign.length>20 ? c.campaign.slice(0,19)+'…' : c.campaign),
+        datasets:[
+          { label:'Remaining after 30 days', data: rows.map(c=>c.remaining_subs_30d), backgroundColor:'#ff6a1f', borderColor:'#000', borderWidth:2, borderRadius:0 },
+          { label:'Remaining after 90 days', data: rows.map(c=>c.remaining_subs_90d), backgroundColor:'#3fd9d0', borderColor:'#000', borderWidth:2, borderRadius:0 },
+        ]
+      },
+      options:{
+        indexAxis:'y', responsive:true, maintainAspectRatio:false, interaction:{mode:'index', intersect:false},
+        plugins:{
+          legend:{display:false},
+          tooltip:{
+            backgroundColor:'#152a2f', borderColor:'#3fd9d0', borderWidth:1,
+            titleFont:{family:'IBM Plex Mono', size:11}, bodyFont:{family:'IBM Plex Sans', size:12},
+            callbacks:{ title: items => rows[items[0].dataIndex].campaign, label: ctx => {
+              const c = rows[ctx.dataIndex];
+              return ctx.parsed.x == null ? '  ' + ctx.dataset.label + ': not tracked yet'
+                : '  ' + ctx.dataset.label + ': ' + fmtInt(ctx.parsed.x) + pct(ctx.parsed.x, c);
+            } }
+          }
+        },
+        scales:{
+          x:{ grid:{color:'#1f3a40'}, beginAtZero:true, ticks:{ callback:v=>fmtInt(v), font:{size:11} } },
+          y:{ grid:{display:false}, ticks:{ autoSkip:false, font:{family:'IBM Plex Sans', size:11.5} } }
+        }
+      }
+    });
+  };
+  document.getElementById('sponsoredBody').innerHTML = sp.campaigns.map(c=>`<tr>
+      <td class="name">${c.campaign}</td><td>${mon(c.date)}</td>
+      <td class="num">${fmtUSD(c.cost)}</td><td class="num">${fmtInt(c.new_subscribers)}</td><td class="num">${fmtUSD2(c.cost_per_subscriber)}</td>
+      <td class="num">${fmtInt(c.remaining_subs_30d)}</td><td class="num">${fmtUSD(c.sales_30d)}</td><td class="num">${fmtUSD2(c.rev_per_sub_30d)}</td>
+      <td class="num">${fmtInt(c.remaining_subs_90d)}</td><td class="num">${fmtUSD(c.sales_90d)}</td><td class="num">${fmtUSD2(c.rev_per_sub_90d)}</td>
+    </tr>`).join('');
+})();
+
+/* ---------------- Footer ---------------- */
+document.getElementById('footerNote').innerHTML = `
+  <strong>Methodology.</strong> Cost per subscriber = total sweepstakes spend (equipment + marketing‑partner line items) ÷ new subscribers gained ("unique to master list").
+  Revenue per subscriber (30/90 day) is each sheet's own figure: post‑giveaway email sales in that window ÷ subscribers still active on the list at that check‑in point.
+  <strong>30/90‑day follow‑up was only tracked from 2024 onward</strong> — 2019–2023 never captured it, so those years and sweepstakes show cost‑per‑subscriber only, with revenue‑per‑subscriber left blank rather than shown as zero.
+  <strong>${ov.total_campaigns - ov.total_campaigns_complete} of ${ov.total_campaigns} sweepstakes</strong> are missing revenue and/or cost figures (mostly 2026, still in progress) and are excluded from revenue/cost totals but included in subscriber counts; these are flagged "partial data" in the table.
+  <strong>${ov.total_campaigns_sponsored} sponsor‑covered giveaways</strong> are now folded into their calendar year (flagged "sponsored" in the tables) — they're included in subscriber, cost‑per‑subscriber, and revenue‑per‑subscriber figures, but since sponsored giveaways don't track a top‑line email‑sales figure the same way, they're left out of the Revenue/Cost dollar totals.
+  Each giveaway now carries a <strong>type</strong> (rifle build, pistol build, optic, 3rd party, etc.) carried over from earlier versions of this dashboard (the workbook no longer has a type row); new sweepstakes inherit the type of a same-named sweepstakes, and "Uncategorized" means none was found.
+  <strong>Sponsored giveaways</strong> also have their own <strong>Sponsored</strong> tab in Sweepstakes detail, with their 30/90‑day sales shown separately from the owned‑sweepstakes totals.
+`;
+
+/* ---------------- Charts (wrapped so a chart-lib failure never blocks the rest of the page) ---------------- */
+try {
+
+Chart.defaults.font.family = "IBM Plex Sans";
+Chart.defaults.color = '#9db3b4';
+
+new Chart(document.getElementById('subsChart'), {
+  type:'bar',
+  data: {
+    labels: years,
+    datasets: [{
+      label: 'New subscribers',
+      data: ys.map(y=>y.total_new_subscribers),
+      backgroundColor: '#6fe0a8', borderColor:'#000', borderWidth:2, borderRadius:0,
+    }]
+  },
+  options: {
+    indexAxis:'y', responsive:true,
+    maintainAspectRatio:false,
+    plugins: {
+      legend:{display:false},
+      tooltip: {
+        backgroundColor: '#152a2f', borderColor:'#3fd9d0', borderWidth:1,
+        callbacks: { label: ctx => '  ' + fmtInt(ctx.parsed.x) + ' subscribers' }
+      }
+    },
+    scales: {
+      x: { grid:{color:'#1f3a40'}, beginAtZero:true, ticks:{ callback: v => fmtInt(v), font:{size:11} } },
+      y: { grid:{display:false}, ticks:{ autoSkip:false, font:{family:'IBM Plex Mono', size:12} } }
+    }
+  }
+});
+
+} catch(err){
+  console.error('Chart rendering failed:', err);
+  document.querySelectorAll('.chart-holder').forEach(el=>{
+    el.innerHTML = '<div style="color:var(--ink-dim); font-size:13px; padding-top:20px;">Chart failed to load.</div>';
+  });
+}
+</script>
+</body>
+</html>
